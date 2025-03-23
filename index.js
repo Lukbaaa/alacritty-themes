@@ -72,26 +72,19 @@ function updateThemeWithFile(themePath, themesPath, tomlPath, preview = false) {
   const alacrittyConfig = fs.readFileSync(tomlPath, 'utf8');
   const parsedAlacrittyConfig = TOML.parse(alacrittyConfig);
 
-  const imports = parsedAlacrittyConfig.import || [];
-  let currentThemeIndex = undefined;
-
-  for (let i = 0; i < imports.length; i++) {
-    const relative = path.relative(themesPath, imports[i]);
-    if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
-      currentThemeIndex = i;
-      break;
-    }
+  // Falls es keine [general]-Sektion gibt, erstelle sie
+  if (!parsedAlacrittyConfig.general) {
+    parsedAlacrittyConfig.general = {};
   }
 
-  if (currentThemeIndex === undefined) {
-    parsedAlacrittyConfig.import = [themePath];
-  } else {
-    parsedAlacrittyConfig.import[currentThemeIndex] = themePath;
-  }
+  // Setze den import in die [general]-Sektion
+  parsedAlacrittyConfig.general.import = [themePath];
 
   const newContent = TOML.stringify(parsedAlacrittyConfig);
 
   const themeName = path.parse(themePath).name;
+
+  console.log(parsedAlacrittyConfig.general.import);
 
   return fsPromises
     .writeFile(tomlPath, newContent, 'utf8')
